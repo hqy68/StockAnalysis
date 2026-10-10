@@ -28,8 +28,14 @@
 
     <p id="status" role="status"></p>
 
-    <details id="config" class="config">
-      <summary>Environment variables</summary>
+    <details id="config" class="config" open>
+      <summary>Connection (troubleshooting)</summary>
+      <dl class="conn">
+        <dt>SQL server</dt><dd id="conn-server">…</dd>
+        <dt>Database</dt><dd id="conn-database">…</dd>
+        <dt>Connection string</dt><dd id="conn-string">…</dd>
+      </dl>
+      <p class="sub">Environment variables</p>
       <table><tbody></tbody></table>
     </details>
 

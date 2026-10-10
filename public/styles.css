@@ -56,6 +56,10 @@ button:disabled { opacity: 0.6; cursor: wait; }
 }
 .config summary { cursor: pointer; color: var(--muted); }
 .config table { width: auto; margin-top: 8px; }
+.conn { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 8px 0; }
+.conn dt { color: var(--muted); }
+.conn dd { margin: 0; font-family: ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+.config .sub { margin: 8px 0 0; }
 .config td { border: none; padding: 2px 16px 2px 0; text-align: left; font-family: ui-monospace, Menlo, monospace; }
 
 .stats {

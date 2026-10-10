@@ -118,7 +118,10 @@ async function loadSymbols() {
 async function loadConfig() {
   const tbody = $('config').querySelector('tbody');
   try {
-    const { env } = await getJSON('/api/config');
+    const { connection, env } = await getJSON('/api/config');
+    $('conn-server').textContent = `${connection.server} (port ${connection.port})`;
+    $('conn-database').textContent = connection.database;
+    $('conn-string').textContent = connection.connectionString;
     for (const [name, value] of Object.entries(env)) {
       const tr = document.createElement('tr');
       tr.innerHTML = '<td></td><td></td>';
