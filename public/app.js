@@ -71,40 +71,73 @@ function renderStats(s) {
   $('stats').hidden = false;
 }
 
-function renderChart(series, symbol) {
-  $('chart-wrap').hidden = false;
+// Daily candlestick (K) chart with volume bars, drawn with TradingView Lightweight Charts.
+function renderKChart(rows, meta, symbol) {
   const css = getComputedStyle(document.documentElement);
-  const accent = css.getPropertyValue('--accent').trim();
-  const muted = css.getPropertyValue('--muted').trim();
-  const border = css.getPropertyValue('--border').trim();
+  const color = (name) => css.getPropertyValue(name).trim();
+  const [up, down, muted, border] = ['--up', '--down', '--muted', '--border'].map(color);
 
-  if (chart) chart.destroy();
-  chart = new Chart($('chart'), {
-    type: 'line',
-    data: {
-      labels: series.dates,
-      datasets: [
-        { label: `${symbol} close`, data: series.close, borderColor: accent, borderWidth: 2, pointRadius: 0 },
-        { label: 'SMA 20', data: series.sma20, borderColor: '#f59e0b', borderWidth: 1.5, pointRadius: 0 },
-        { label: 'SMA 50', data: series.sma50, borderColor: '#a855f7', borderWidth: 1.5, pointRadius: 0 },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      scales: {
-        x: { ticks: { color: muted, maxTicksLimit: 8 }, grid: { color: border } },
-        y: { ticks: { color: muted }, grid: { color: border } },
-      },
-      plugins: { legend: { labels: { color: muted } } },
-    },
+  const bars = rows
+    .map((r) => ({
+      time: String(r[meta.dateColumn]).slice(0, 10),
+      open: Number(r[meta.openColumn]),
+      high: Number(r[meta.highColumn]),
+      low: Number(r[meta.lowColumn]),
+      close: Number(r[meta.closeColumn]),
+      volume: Number(r[meta.volumeColumn]),
+    }))
+    .filter((b) => [b.open, b.high, b.low, b.close].every(Number.isFinite))
+    .sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+
+  if (chart) chart.remove();
+  chart = null;
+  if (bars.length === 0) return null;
+
+  $('chart-wrap').hidden = false;
+  chart = LightweightCharts.createChart($('chart'), {
+    autoSize: true,
+    layout: { background: { color: 'transparent' }, textColor: muted },
+    grid: { vertLines: { color: border }, horzLines: { color: border } },
+    rightPriceScale: { borderColor: border },
+    timeScale: { borderColor: border },
+    watermark: { visible: true, text: symbol, color: border, fontSize: 48 },
   });
+
+  const candles = chart.addCandlestickSeries({
+    upColor: up, downColor: down, wickUpColor: up, wickDownColor: down, borderVisible: false,
+  });
+  candles.setData(bars.map(({ time, open, high, low, close }) => ({ time, open, high, low, close })));
+  candles.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } });
+
+  if (bars.some((b) => Number.isFinite(b.volume))) {
+    const volume = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '' });
+    volume.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+    volume.setData(bars.filter((b) => Number.isFinite(b.volume)).map((b) => ({
+      time: b.time, value: b.volume, color: `${b.close >= b.open ? up : down}66`,
+    })));
+  }
+
+  chart.timeScale().fitContent();
+  return chart;
+}
+
+// Overlay the moving averages computed by /api/stats on the K chart.
+function addMovingAverages(series) {
+  if (!chart) return;
+  for (const [key, color] of [['sma20', '#f59e0b'], ['sma50', '#a855f7']]) {
+    const line = chart.addLineSeries({
+      color, lineWidth: 1.5, title: key.toUpperCase(), priceLineVisible: false, lastValueVisible: false,
+    });
+    line.setData(series.dates
+      .map((time, i) => ({ time, value: series[key][i] }))
+      .filter((p) => p.value != null));
+  }
 }
 
 async function loadSymbols() {
   try {
     const { symbols } = await getJSON('/api/symbols');
+    if (!symbols.length) setStatus('No symbols found in the table.', true);
     for (const s of symbols) {
       const opt = document.createElement('option');
       opt.value = opt.textContent = s;
@@ -143,8 +176,11 @@ async function loadHistory(e) {
   setStatus('Loading…');
 
   const symbol = $('symbol').value;
-  const params = new URLSearchParams({ limit: $('limit').value || '500' });
-  if (symbol) params.set('symbol', symbol);
+  if (!symbol) {
+    btn.disabled = false;
+    return;
+  }
+  const params = new URLSearchParams({ symbol, limit: $('limit').value || '500' });
   if ($('from').value) params.set('from', $('from').value);
   if ($('to').value) params.set('to', $('to').value);
 
@@ -153,10 +189,13 @@ async function loadHistory(e) {
     renderTable(columns.length ? columns : Object.keys(rows[0] || {}), rows);
     setStatus(`${rows.length} rows loaded.`);
 
-    // Analytics only make sense for a single symbol's price series.
     $('stats').hidden = true;
     $('chart-wrap').hidden = true;
-    if (symbol && rows.length > 1 && meta.closeColumn in rows[0]) {
+    if (!renderKChart(rows, meta, symbol) && rows.length) {
+      setStatus(`${rows.length} rows loaded, but no ${meta.openColumn}/${meta.highColumn}/${meta.lowColumn}/${meta.closeColumn} values to chart.`, true);
+    }
+
+    if (rows.length > 1 && meta.closeColumn in rows[0]) {
       const prices = rows.map((r) => ({ date: r[meta.dateColumn], close: r[meta.closeColumn] }));
       const stats = await getJSON('/api/stats', {
         method: 'POST',
@@ -164,7 +203,7 @@ async function loadHistory(e) {
         body: JSON.stringify({ prices }),
       });
       renderStats(stats);
-      renderChart(stats.series, symbol);
+      addMovingAverages(stats.series);
     }
   } catch (err) {
     setStatus(err.message, true);
@@ -174,6 +213,7 @@ async function loadHistory(e) {
 }
 
 $('filters').addEventListener('submit', loadHistory);
+$('symbol').addEventListener('change', loadHistory);
 loadConfig();
-loadSymbols();
-loadHistory();
+// The dropdown is filled from the table's symbol column; chart the first symbol.
+loadSymbols().then(loadHistory);

@@ -45,7 +45,11 @@ module.exports = async (req, res) => {
       meta: {
         symbolColumn: schema.symbolColumn,
         dateColumn: schema.dateColumn,
+        openColumn: schema.openColumn,
+        highColumn: schema.highColumn,
+        lowColumn: schema.lowColumn,
         closeColumn: schema.closeColumn,
+        volumeColumn: schema.volumeColumn,
       },
       rows: result.recordset,
     });

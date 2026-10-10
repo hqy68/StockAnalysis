@@ -16,7 +16,11 @@ const schema = {
   table: process.env.STOCK_TABLE || 'dbo.StockHistory',
   symbolColumn: process.env.SYMBOL_COLUMN || 'Symbol',
   dateColumn: process.env.DATE_COLUMN || 'Date',
+  openColumn: process.env.OPEN_COLUMN || 'Open',
+  highColumn: process.env.HIGH_COLUMN || 'High',
+  lowColumn: process.env.LOW_COLUMN || 'Low',
   closeColumn: process.env.CLOSE_COLUMN || 'Close',
+  volumeColumn: process.env.VOLUME_COLUMN || 'Volume',
 };
 
 const config = {

@@ -29,7 +29,7 @@ The API returns all columns (`SELECT *`), and the table view renders whatever co
 ## Environment variables
 
 See `.env.example`. Required: `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_SQL_USER`, `AZURE_SQL_PASSWORD`.
-Optional: `STOCK_TABLE`, `SYMBOL_COLUMN`, `DATE_COLUMN`, `CLOSE_COLUMN`.
+Optional: `STOCK_TABLE`, `SYMBOL_COLUMN`, `DATE_COLUMN`, `OPEN_COLUMN`, `HIGH_COLUMN`, `LOW_COLUMN`, `CLOSE_COLUMN`, `VOLUME_COLUMN`.
 
 ## Azure SQL firewall
 

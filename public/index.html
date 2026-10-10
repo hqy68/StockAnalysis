@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Stock History</title>
   <link rel="stylesheet" href="/styles.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
   <header>
@@ -16,7 +16,7 @@
   <main>
     <form id="filters">
       <label>Symbol
-        <select id="symbol"><option value="">All symbols</option></select>
+        <select id="symbol"></select>
       </label>
       <label>From <input type="date" id="from" /></label>
       <label>To <input type="date" id="to" /></label>
@@ -42,7 +42,7 @@
     <section id="stats" class="stats" hidden></section>
 
     <section class="chart-wrap" id="chart-wrap" hidden>
-      <canvas id="chart"></canvas>
+      <div id="chart"></div>
     </section>
 
     <section class="table-wrap">
