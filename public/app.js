@@ -107,11 +107,12 @@ function renderKChart(rows, meta, symbol) {
     upColor: up, downColor: down, wickUpColor: up, wickDownColor: down, borderVisible: false,
   });
   candles.setData(bars.map(({ time, open, high, low, close }) => ({ time, open, high, low, close })));
-  candles.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } });
+  // Stacked panes on one time scale: candles on top, then volume, then MACD.
+  candles.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.42 } });
 
   if (bars.some((b) => Number.isFinite(b.volume))) {
     const volume = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '' });
-    volume.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+    volume.priceScale().applyOptions({ scaleMargins: { top: 0.6, bottom: 0.3 } });
     volume.setData(bars.filter((b) => Number.isFinite(b.volume)).map((b) => ({
       time: b.time, value: b.volume, color: `${b.close >= b.open ? up : down}66`,
     })));
@@ -131,6 +132,29 @@ function addMovingAverages(series) {
     line.setData(series.dates
       .map((time, i) => ({ time, value: series[key][i] }))
       .filter((p) => p.value != null));
+  }
+}
+
+// MACD (12, 26, 9) from /api/stats, drawn in the bottom pane of the K chart.
+function addMacd(series) {
+  if (!chart || !series.macd) return;
+  const css = getComputedStyle(document.documentElement);
+  const [up, down, accent] = ['--up', '--down', '--accent'].map((n) => css.getPropertyValue(n).trim());
+  const points = (key) => series.dates
+    .map((time, i) => ({ time, value: series[key][i] }))
+    .filter((p) => p.value != null);
+
+  const hist = chart.addHistogramSeries({
+    priceScaleId: 'macd', title: 'MACD hist', priceLineVisible: false, lastValueVisible: false,
+  });
+  hist.priceScale().applyOptions({ scaleMargins: { top: 0.74, bottom: 0.02 } });
+  hist.setData(points('hist').map((p) => ({ ...p, color: `${p.value >= 0 ? up : down}99` })));
+
+  for (const [key, color, title] of [['macd', accent, 'MACD'], ['signal', '#f59e0b', 'Signal']]) {
+    const line = chart.addLineSeries({
+      priceScaleId: 'macd', color, lineWidth: 1.5, title, priceLineVisible: false, lastValueVisible: false,
+    });
+    line.setData(points(key));
   }
 }
 
@@ -204,6 +228,7 @@ async function loadHistory(e) {
       });
       renderStats(stats);
       addMovingAverages(stats.series);
+      addMacd(stats.series);
     }
   } catch (err) {
     setStatus(err.message, true);

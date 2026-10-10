@@ -1,7 +1,7 @@
 """POST /api/stats  -- Python serverless function on Vercel.
 
 Body: {"prices": [{"date": "2024-01-02", "close": 101.5}, ...]}
-Returns summary analytics (returns, volatility, drawdown, moving averages).
+Returns summary analytics (returns, volatility, drawdown, moving averages, MACD).
 Uses only the standard library, so no native dependencies are needed.
 """
 
@@ -22,6 +22,33 @@ def moving_average(values, window):
             running -= values[i - window]
         out.append(round(running / window, 4) if i >= window - 1 else None)
     return out
+
+
+def ema(values, span):
+    alpha = 2 / (span + 1)
+    out = []
+    for i, v in enumerate(values):
+        out.append(v if i == 0 else alpha * v + (1 - alpha) * out[-1])
+    return out
+
+
+def macd(values, fast=12, slow=26, signal=9):
+    """MACD line (EMA fast - EMA slow), its signal EMA, and the histogram.
+
+    Points before the slow EMA (and then the signal EMA) has warmed up are None.
+    """
+    line = [f - s for f, s in zip(ema(values, fast), ema(values, slow))]
+    sig = ema(line, signal)
+    start_line, start_sig = slow - 1, slow + signal - 2
+
+    def trim(series, start):
+        return [round(v, 4) if i >= start else None for i, v in enumerate(series)]
+
+    return {
+        "macd": trim(line, start_line),
+        "signal": trim(sig, start_sig),
+        "hist": trim([m - s for m, s in zip(line, sig)], start_sig),
+    }
 
 
 def compute_stats(prices):
@@ -68,6 +95,7 @@ def compute_stats(prices):
             "close": closes,
             "sma20": moving_average(closes, 20),
             "sma50": moving_average(closes, 50),
+            **macd(closes),
         },
     }
 
