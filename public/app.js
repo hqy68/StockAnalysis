@@ -135,6 +135,20 @@ function addMovingAverages(series) {
   }
 }
 
+// Bollinger Bands (20, 2) from /api/stats, drawn over the candles. SMA 20 is the middle band.
+function addBollinger(series) {
+  if (!chart || !series.bbUpper) return;
+  for (const key of ['bbUpper', 'bbLower']) {
+    const band = chart.addLineSeries({
+      color: '#64748b', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed,
+      title: key === 'bbUpper' ? 'BB upper' : 'BB lower', priceLineVisible: false, lastValueVisible: false,
+    });
+    band.setData(series.dates
+      .map((time, i) => ({ time, value: series[key][i] }))
+      .filter((p) => p.value != null));
+  }
+}
+
 // MACD (12, 26, 9) from /api/stats, drawn in the bottom pane of the K chart.
 function addMacd(series) {
   if (!chart || !series.macd) return;
@@ -228,6 +242,7 @@ async function loadHistory(e) {
       });
       renderStats(stats);
       addMovingAverages(stats.series);
+      addBollinger(stats.series);
       addMacd(stats.series);
     }
   } catch (err) {

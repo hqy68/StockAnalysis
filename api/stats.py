@@ -1,14 +1,14 @@
 """POST /api/stats  -- Python serverless function on Vercel.
 
 Body: {"prices": [{"date": "2024-01-02", "close": 101.5}, ...]}
-Returns summary analytics (returns, volatility, drawdown, moving averages, MACD).
+Returns summary analytics (returns, volatility, drawdown, moving averages, Bollinger Bands, MACD).
 Uses only the standard library, so no native dependencies are needed.
 """
 
 import json
 import math
 from http.server import BaseHTTPRequestHandler
-from statistics import mean, stdev
+from statistics import mean, pstdev, stdev
 
 TRADING_DAYS = 252
 
@@ -22,6 +22,21 @@ def moving_average(values, window):
             running -= values[i - window]
         out.append(round(running / window, 4) if i >= window - 1 else None)
     return out
+
+
+def bollinger(values, window=20, k=2):
+    """Bollinger Bands: SMA(window) +/- k population standard deviations."""
+    upper, lower = [], []
+    for i in range(len(values)):
+        if i < window - 1:
+            upper.append(None)
+            lower.append(None)
+            continue
+        chunk = values[i - window + 1 : i + 1]
+        mid, sd = mean(chunk), pstdev(chunk)
+        upper.append(round(mid + k * sd, 4))
+        lower.append(round(mid - k * sd, 4))
+    return {"bbUpper": upper, "bbLower": lower}
 
 
 def ema(values, span):
@@ -95,6 +110,7 @@ def compute_stats(prices):
             "close": closes,
             "sma20": moving_average(closes, 20),
             "sma50": moving_average(closes, 50),
+            **bollinger(closes),
             **macd(closes),
         },
     }
