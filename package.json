@@ -1,0 +1,15 @@
+{
+  "name": "stock-analysis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stock history viewer backed by Azure SQL, deployable to Vercel",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "mssql": "^11.0.1"
+  }
+}

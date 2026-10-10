@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock History</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Stock History</h1>
+    <p class="sub">Azure SQL · Node.js API · Python analytics</p>
+  </header>
+
+  <main>
+    <form id="filters">
+      <label>Symbol
+        <select id="symbol"><option value="">All symbols</option></select>
+      </label>
+      <label>From <input type="date" id="from" /></label>
+      <label>To <input type="date" id="to" /></label>
+      <label>Rows
+        <input type="number" id="limit" value="500" min="1" max="5000" />
+      </label>
+      <button type="submit">Load</button>
+    </form>
+
+    <p id="status" role="status"></p>
+
+    <section id="stats" class="stats" hidden></section>
+
+    <section class="chart-wrap" id="chart-wrap" hidden>
+      <canvas id="chart"></canvas>
+    </section>
+
+    <section class="table-wrap">
+      <table id="table">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
