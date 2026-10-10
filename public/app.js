@@ -115,6 +115,24 @@ async function loadSymbols() {
   }
 }
 
+async function loadConfig() {
+  const tbody = $('config').querySelector('tbody');
+  try {
+    const { env } = await getJSON('/api/config');
+    for (const [name, value] of Object.entries(env)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td></td><td></td>';
+      tr.cells[0].textContent = name;
+      tr.cells[1].textContent = value ?? '(not set)';
+      if (value == null) tr.cells[1].className = 'down';
+      tbody.appendChild(tr);
+    }
+  } catch (err) {
+    tbody.innerHTML = '<tr><td class="down"></td></tr>';
+    tbody.querySelector('td').textContent = `Could not load config: ${err.message}`;
+  }
+}
+
 async function loadHistory(e) {
   e?.preventDefault();
   const btn = document.querySelector('button[type=submit]');
@@ -153,5 +171,6 @@ async function loadHistory(e) {
 }
 
 $('filters').addEventListener('submit', loadHistory);
+loadConfig();
 loadSymbols();
 loadHistory();

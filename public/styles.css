@@ -50,6 +50,14 @@ button:disabled { opacity: 0.6; cursor: wait; }
 #status { color: var(--muted); min-height: 1.5em; }
 #status.error { color: var(--down); }
 
+.config {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; margin-bottom: 16px;
+}
+.config summary { cursor: pointer; color: var(--muted); }
+.config table { width: auto; margin-top: 8px; }
+.config td { border: none; padding: 2px 16px 2px 0; text-align: left; font-family: ui-monospace, Menlo, monospace; }
+
 .stats {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px; margin-bottom: 16px;
